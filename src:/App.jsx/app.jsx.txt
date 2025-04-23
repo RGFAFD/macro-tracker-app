@@ -1,0 +1,92 @@
+import { useState } from 'react';
+
+export default function MacroTrackerApp() {
+  const [weight, setWeight] = useState(55);
+  const [dayType, setDayType] = useState('moderate');
+  const [meals, setMeals] = useState([]);
+
+  const macroTargets = {
+    rest: { protein: 1.0, carbs: 2.0 },
+    moderate: { protein: 1.3, carbs: 2.5 },
+    high: { protein: 1.5, carbs: 3.0 }
+  };
+
+  const targets = {
+    protein: macroTargets[dayType].protein * weight,
+    carbs: macroTargets[dayType].carbs * weight
+  };
+
+  const totals = meals.reduce(
+    (acc, meal) => {
+      acc.protein += meal.protein;
+      acc.carbs += meal.carbs;
+      acc.fat += meal.fat;
+      return acc;
+    },
+    { protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const totalCalories = totals.protein * 4 + totals.carbs * 4 + totals.fat * 9;
+  const macroPercent = {
+    protein: ((totals.protein * 4) / totalCalories * 100 || 0).toFixed(1),
+    carbs: ((totals.carbs * 4) / totalCalories * 100 || 0).toFixed(1),
+    fat: ((totals.fat * 9) / totalCalories * 100 || 0).toFixed(1)
+  };
+
+  const addMeal = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const newMeal = {
+      description: form.description.value,
+      protein: parseFloat(form.protein.value),
+      carbs: parseFloat(form.carbs.value),
+      fat: parseFloat(form.fat.value)
+    };
+    setMeals([...meals, newMeal]);
+    form.reset();
+  };
+
+  return (
+    <div style={{ maxWidth: '600px', margin: '2rem auto', fontFamily: 'sans-serif' }}>
+      <h2>Daily Macro Tracker</h2>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <input
+          type=\"number\"
+          value={weight}
+          onChange={(e) => setWeight(+e.target.value)}
+          placeholder=\"Weight (kg)\"
+        />
+        <select value={dayType} onChange={(e) => setDayType(e.target.value)}>
+          <option value=\"rest\">Rest</option>
+          <option value=\"moderate\">Moderate</option>
+          <option value=\"high\">High</option>
+        </select>
+      </div>
+
+      <form onSubmit={addMeal} style={{ marginBottom: '1rem' }}>
+        <input name=\"description\" placeholder=\"Meal description\" required />
+        <input name=\"protein\" type=\"number\" step=\"0.1\" placeholder=\"Protein (g)\" required />
+        <input name=\"carbs\" type=\"number\" step=\"0.1\" placeholder=\"Carbs (g)\" required />
+        <input name=\"fat\" type=\"number\" step=\"0.1\" placeholder=\"Fat (g)\" required />
+        <button type=\"submit\">Add Meal</button>
+      </form>
+
+      <ul>
+        {meals.map((meal, idx) => (
+          <li key={idx}>{meal.description}: {meal.protein}g P, {meal.carbs}g C, {meal.fat}g F</li>
+        ))}
+      </ul>
+
+      <h3>Summary:</h3>
+      <p>Protein: {totals.protein.toFixed(1)}g / {targets.protein}g</p>
+      <p>Carbs: {totals.carbs.toFixed(1)}g / {targets.carbs}g</p>
+      <p>Fat: {totals.fat.toFixed(1)}g</p>
+
+      <h4>Macro % of Calories</h4>
+      <p>Protein: {macroPercent.protein}%</p>
+      <p>Carbs: {macroPercent.carbs}%</p>
+      <p>Fat: {macroPercent.fat}%</p>
+    </div>
+  );
+}
